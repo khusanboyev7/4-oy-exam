@@ -14,7 +14,8 @@ import { BorrowModule } from '../api/borrow/borrow.module';
       type: 'postgres',
       url: String(config.DB_URI),
       autoLoadEntities: true,
-      synchronize: config.DB_SYNC,
+      synchronize: false,
+
     }),
 
     JwtModule.register({

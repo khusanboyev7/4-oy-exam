@@ -6,7 +6,7 @@ import {
   Delete,
   Param,
   Body,
-  ParseIntPipe,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { BorrowService } from './borrow.service';
@@ -24,7 +24,7 @@ export class BorrowController {
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
+  findOne(@Param('id', ParseUUIDPipe) id: number) {
     return this.borrowService.findOne(id);
   }
 
@@ -34,12 +34,12 @@ export class BorrowController {
   }
 
   @Patch(':id')
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateBorrowDto) {
+  update(@Param('id', ParseUUIDPipe) id: number, @Body() dto: UpdateBorrowDto) {
     return this.borrowService.update(id, dto);
   }
 
   @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.borrowService.remove(+id);
+  remove(@Param('id', ParseUUIDPipe) id: number) {
+    return this.borrowService.remove(id);
   }
 }

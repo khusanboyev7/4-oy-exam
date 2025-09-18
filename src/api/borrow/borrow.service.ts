@@ -3,10 +3,7 @@ import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { Borrow } from '../../core/entity/borrow.entity';
 import { Book } from '../../core/entity/book.entity';
-import {
-  BookHistory,
-  HistoryAction,
-} from '../../core/entity/book-history.entity';
+import { BookHistory } from '../../core/entity/book-history.entity';
 import { CreateBorrowDto } from './dto/create-borrow.dto';
 import { UpdateBorrowDto } from './dto/update-borrow.dto';
 
@@ -42,7 +39,7 @@ export class BorrowService {
       const history = queryRunner.manager.create(BookHistory, {
         user: { id: dto.userId },
         book: { id: dto.bookId },
-        action: HistoryAction.BORROW,
+        action: BookHistory.bind,
         date: new Date(),
       });
       await queryRunner.manager.save(history);
@@ -50,7 +47,7 @@ export class BorrowService {
       await queryRunner.manager.update(
         Book,
         { id: dto.bookId },
-        { available: false },
+        { createdAt: false },
       );
 
       await queryRunner.commitTransaction();
@@ -84,7 +81,7 @@ export class BorrowService {
       const history = queryRunner.manager.create(BookHistory, {
         user: { id: borrow.user.id },
         book: { id: borrow.book.id },
-        action: HistoryAction.RETURN,
+        action: BookHistory.arguments,
         date: new Date(),
       });
       await queryRunner.manager.save(history);
@@ -92,7 +89,7 @@ export class BorrowService {
       await queryRunner.manager.update(
         Book,
         { id: borrow.book.id },
-        { available: true },
+        { updatedAt: true },
       );
 
       await queryRunner.commitTransaction();

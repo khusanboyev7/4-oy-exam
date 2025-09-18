@@ -20,7 +20,7 @@ export class BookHistoryService {
   async findAll() {
     return await this.bookHistoryRepo.find({
       relations: ['user', 'book'],
-      order: { borrow_date: 'DESC' },
+      order: { borrowed_at: 'DESC' },
     });
   }
 

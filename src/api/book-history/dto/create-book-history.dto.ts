@@ -1,47 +1,41 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsUUID, IsNotEmpty, IsDateString } from 'class-validator';
+import { IsUUID, IsEnum, IsOptional, IsDateString } from 'class-validator';
+import { BookHistoryStatus } from 'src/core/entity/book-history.entity';
 
 export class CreateBookHistoryDto {
-  @ApiProperty({
-    description: 'ID of the user who borrowed the book',
-    example: '7c3f5c9d-5f41-42c3-84d1-5de88f2c1234',
-  })
+  @ApiProperty({ description: 'Foydalanuvchi ID', example: 'uuid' })
   @IsUUID()
-  @IsNotEmpty()
   userId: string;
 
-  @ApiProperty({
-    description: 'ID of the borrowed book',
-    example: 'd2a5b2b1-9c3a-4f12-91f1-0bda2f4b5678',
-  })
+  @ApiProperty({ description: 'Kitob ID', example: 'uuid' })
   @IsUUID()
-  @IsNotEmpty()
   bookId: string;
 
   @ApiProperty({
-    description: 'Borrow date (ISO format)',
-    example: '2025-09-16T10:00:00.000Z',
+    description: 'Holat',
+    enum: BookHistoryStatus,
+    example: 'borrowed',
+    required: false,
   })
-  @IsDateString()
-  borrow_date: Date;
+  @IsOptional()
+  @IsEnum(BookHistoryStatus)
+  status?: BookHistoryStatus;
 
   @ApiProperty({
-    description: 'Due date for returning the book (ISO format)',
-    example: '2025-09-23T10:00:00.000Z',
+    description: 'Borrow qilingan vaqt',
+    example: '2025-09-16T10:00:00Z',
+    required: false,
   })
+  @IsOptional()
   @IsDateString()
-  due_date: Date;
+  borrowed_at?: Date;
 
   @ApiProperty({
-    description: 'Return date of the book (ISO format)',
-    example: '2025-09-21T14:20:00.000Z',
+    description: 'Return qilingan vaqt',
+    example: '2025-09-20T10:00:00Z',
+    required: false,
   })
+  @IsOptional()
   @IsDateString()
-  return_date: Date;
-
-  @ApiProperty({
-    description: 'Indicates whether the book was returned overdue',
-    example: false,
-  })
-  overdue: boolean;
+  returned_at?: Date;
 }

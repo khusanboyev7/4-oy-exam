@@ -1,11 +1,11 @@
-import {
-  IsEmail,
-  IsOptional,
-  IsString,
-  IsBoolean,
-  IsEnum,
-} from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  IsString,
+  IsEmail,
+  IsEnum,
+  IsBoolean,
+  IsOptional,
+} from 'class-validator';
 import { AccessRoles } from 'src/common/enum/roles.enum';
 
 export class UpdateUserDto {
@@ -24,11 +24,13 @@ export class UpdateUserDto {
   @IsString()
   password?: string;
 
-  @IsBoolean()
+  @ApiPropertyOptional({ enum: AccessRoles })
   @IsOptional()
-  isActive?: boolean;
-
   @IsEnum(AccessRoles)
-  @IsOptional()
   role?: AccessRoles;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
 }

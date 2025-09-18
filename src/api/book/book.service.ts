@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { Book } from 'src/core/entity/book.entity';
 import { CreateBookDto } from './dto/create-book.dto';
 import { UpdateBookDto } from './dto/update-book.dto';
+import { User } from 'src/core/entity/users.entity';
 
 @Injectable()
 export class BookService {
@@ -12,17 +13,21 @@ export class BookService {
     private readonly bookRepo: Repository<Book>,
   ) {}
 
-  create(dto: CreateBookDto) {
-    const book = this.bookRepo.create(dto);
-    return this.bookRepo.save(book);
+  async create(dto: CreateBookDto, user: User) {
+    const book = this.bookRepo.create({ ...dto, addedBy: user });
+    await this.bookRepo.save(book);
+    return { statusCode: 201, message: 'Book added', data: book };
   }
 
-  findAll() {
-    return this.bookRepo.find();
+  async findAll() {
+    return this.bookRepo.find({ relations: ['addedBy'] });
   }
 
   async findOne(id: string) {
-    const book = await this.bookRepo.findOne({ where: { id } });
+    const book = await this.bookRepo.findOne({
+      where: { id },
+      relations: ['addedBy'],
+    });
     if (!book) throw new NotFoundException('Book not found');
     return book;
   }
@@ -30,11 +35,13 @@ export class BookService {
   async update(id: string, dto: UpdateBookDto) {
     const book = await this.findOne(id);
     Object.assign(book, dto);
-    return this.bookRepo.save(book);
+    await this.bookRepo.save(book);
+    return { statusCode: 200, message: 'Book updated', data: book };
   }
 
-  async remove(id: string) {
+  async delete(id: string) {
     const book = await this.findOne(id);
-    return this.bookRepo.remove(book);
+    await this.bookRepo.remove(book);
+    return { statusCode: 200, message: 'Book deleted' };
   }
 }

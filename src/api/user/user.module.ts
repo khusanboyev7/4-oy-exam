@@ -3,13 +3,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from 'src/core/entity/users.entity';
 import { UserService } from './user.service';
 import { UserController } from './user.controller';
-import { TokenService } from 'src/common/token/token'; 
 import { CryptoService } from 'src/common/bcrypt/Crypto';
-import { AuthModule } from '../auth/auth.module';
+import { TokenService } from 'src/common/token/token';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User]), AuthModule],
-  providers: [UserService, TokenService, CryptoService],
+  imports: [TypeOrmModule.forFeature([User])],
+  providers: [UserService, CryptoService, TokenService],
   controllers: [UserController],
   exports: [UserService],
 })
