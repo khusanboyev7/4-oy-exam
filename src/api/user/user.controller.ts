@@ -25,6 +25,9 @@ import { AuthGuard } from 'src/common/guard/auth.guard';
 import { RolesGuard } from 'src/common/guard/roles.guard';
 import { Roles } from 'src/infrastucture/decorator/role.decorator';
 import { AccessRoles } from 'src/common/enum/roles.enum';
+import { request } from 'http';
+import { LoginDto } from '../auth/dto/login.dto';
+
 
 @ApiTags('User')
 @Controller('users')
@@ -37,12 +40,13 @@ export class UserController {
   }
 
   @Post('signin')
-  signIn(@Body() dto: SignInDto, @Res({ passthrough: true }) res: Response) {
-    return this.userService.signIn(dto, res);
+  async signIn(@Body() dto: LoginDto) {
+    return this.userService.signIn(dto);
   }
 
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(AccessRoles.ADMIN)
+  @ApiBearerAuth()
   @Get()
   findAll() {
     return this.userService.findAll();
@@ -50,6 +54,7 @@ export class UserController {
 
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(AccessRoles.ADMIN)
+  @ApiBearerAuth()
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.userService.findOneById(id);
@@ -57,6 +62,7 @@ export class UserController {
 
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(AccessRoles.ADMIN)
+  @ApiBearerAuth()
   @Patch(':id')
   update(@Param('id') id: string, @Body() dto: UpdateUserDto) {
     return this.userService.update(id, dto);
@@ -64,6 +70,7 @@ export class UserController {
 
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(AccessRoles.ADMIN)
+  @ApiBearerAuth()
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.userService.delete(id);

@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsUUID, IsEnum, IsOptional, IsDateString } from 'class-validator';
-import { BookHistoryStatus } from 'src/core/entity/book-history.entity';
+
+export type BookHistoryAction = 'borrow' | 'return';
 
 export class CreateBookHistoryDto {
   @ApiProperty({ description: 'Foydalanuvchi ID', example: 'uuid' })
@@ -13,13 +14,13 @@ export class CreateBookHistoryDto {
 
   @ApiProperty({
     description: 'Holat',
-    enum: BookHistoryStatus,
-    example: 'borrowed',
+    enum: ['borrow', 'return'],
+    example: 'borrow',
     required: false,
   })
   @IsOptional()
-  @IsEnum(BookHistoryStatus)
-  status?: BookHistoryStatus;
+  @IsEnum(['borrow', 'return'])
+  action?: BookHistoryAction;
 
   @ApiProperty({
     description: 'Borrow qilingan vaqt',
@@ -28,7 +29,7 @@ export class CreateBookHistoryDto {
   })
   @IsOptional()
   @IsDateString()
-  borrowed_at?: Date;
+  borrowedAt?: string;
 
   @ApiProperty({
     description: 'Return qilingan vaqt',
@@ -37,5 +38,5 @@ export class CreateBookHistoryDto {
   })
   @IsOptional()
   @IsDateString()
-  returned_at?: Date;
+  returnedAt?: string;
 }

@@ -7,6 +7,7 @@ import { UserModule } from '../api/user/user.module';
 import { BookModule } from '../api/book/book.module';
 import { BookHistoryModule } from '../api/book-history/book-history.module';
 import { BorrowModule } from '../api/borrow/borrow.module';
+import { StatsModule } from './stats/stats.module';
 
 @Module({
   imports: [
@@ -15,7 +16,6 @@ import { BorrowModule } from '../api/borrow/borrow.module';
       url: String(config.DB_URI),
       autoLoadEntities: true,
       synchronize: false,
-
     }),
 
     JwtModule.register({
@@ -30,6 +30,7 @@ import { BorrowModule } from '../api/borrow/borrow.module';
     BookModule,
     BookHistoryModule,
     BorrowModule,
+    StatsModule,
   ],
 })
 export class AppModule {}

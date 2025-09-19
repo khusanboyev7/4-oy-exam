@@ -5,7 +5,7 @@ import { Response } from 'express';
 import { IToken } from '../interface/token.interface';
 
 @Injectable()
-export class TokenService {
+export class Token {
   constructor(private readonly jwt: JwtService) {}
 
   async accessToken(payload: IToken): Promise<string> {
@@ -38,4 +38,9 @@ export class TokenService {
   async verifyToken(token: string, secretKey: string): Promise<object> {
     return this.jwt.verifyAsync(token, { secret: secretKey });
   }
-}
+
+ static sign(payload: IToken): string {
+  return new JwtService({
+    secret: config.ACCESS_TOKEN_SECRET_KEY,
+  }).sign(payload, { expiresIn: config.ACCESS_TOKEN_TIME });
+}}

@@ -1,63 +1,64 @@
 import {
   Injectable,
-  ConflictException,
   NotFoundException,
-  BadRequestException,
+  UnauthorizedException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
+import * as bcrypt from 'bcrypt';
 import { Repository } from 'typeorm';
-import { User } from 'src/core/entity/users.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { User, AccessRoles } from '../../core/entity/users.entity';
 import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { CryptoService } from 'src/common/bcrypt/Crypto';
-import { TokenService } from 'src/common/token/token';
-import { SignInDto } from 'src/common/dto/signIn.dto';
-import { Response } from 'express';
-import { getSuccessRes } from 'src/common/util/get-succes-res';
-import { IToken } from 'src/common/interface/token.interface';
-
+import { LoginDto } from '../auth/dto/login.dto';
+import { Token } from '../../common/token/token'; 
 @Injectable()
 export class UserService {
   constructor(
-    @InjectRepository(User)
-    private readonly userRepo: Repository<User>,
-    private readonly crypto: CryptoService,
-    private readonly tokenService: TokenService,
+    @InjectRepository(User) private readonly userRepo: Repository<User>,
   ) {}
 
   async register(dto: CreateUserDto) {
-    const exists = await this.userRepo.findOne({ where: { email: dto.email } });
-    if (exists) throw new ConflictException('Email already registered');
-
-    const hashed = await this.crypto.encrypt(dto.password);
-    const user = this.userRepo.create({ ...dto, password: hashed });
+    const hashed = await bcrypt.hash(dto.password, 10);
+    const user = this.userRepo.create({
+      full_name: dto.full_name,
+      email: dto.email,
+      password: hashed,
+      role: (dto.role ?? AccessRoles.READER) as AccessRoles,
+      isActive: true,
+    });
     await this.userRepo.save(user);
-    return getSuccessRes(user, 201);
+    return { status: 'success', message: 'User registered', data: user };
   }
 
-  async signIn(dto: SignInDto, res: Response) {
-    const user = await this.userRepo.findOne({
-      where: { email: dto.username },
-    });
-    if (!user) throw new BadRequestException('User not found');
+  async signIn(dto: LoginDto) {
+    const user = await this.userRepo.findOne({ where: { email: dto.email } });
+    if (!user) throw new UnauthorizedException('Invalid credentials');
 
-    const match = await this.crypto.decrypt(dto.password, user.password);
-    if (!match) throw new BadRequestException('Invalid password');
+    const match = await bcrypt.compare(dto.password, user.password);
+    if (!match) throw new UnauthorizedException('Invalid credentials');
 
-    const payload: IToken = {
+    const token = Token.sign({
       id: user.id,
-      isActive: user.isActive,
       role: user.role,
-    };
-    const accessToken = await this.tokenService.accessToken(payload);
-    const refreshToken = await this.tokenService.refreshToken(payload);
+      isActive: user.isActive,
+    });
 
-    await this.tokenService.writeCookie(res, 'userToken', refreshToken, 15);
-    return getSuccessRes({ token: accessToken });
+    return {
+      status: 'success',
+      message: 'Login successful',
+      data: {
+        user: {
+          id: user.id,
+          email: user.email,
+          full_name: user.full_name,
+          role: user.role,
+        },
+        token,
+      },
+    };
   }
 
   async findAll() {
-    return this.userRepo.find();
+    return await this.userRepo.find();
   }
 
   async findOneById(id: string) {
@@ -66,17 +67,15 @@ export class UserService {
     return user;
   }
 
-  async update(id: string, dto: UpdateUserDto) {
+  async update(id: string, dto: Partial<CreateUserDto>) {
     const user = await this.findOneById(id);
-    if (dto.password) user.password = await this.crypto.encrypt(dto.password);
     Object.assign(user, dto);
-    await this.userRepo.save(user);
-    return getSuccessRes(user);
+    return await this.userRepo.save(user);
   }
 
   async delete(id: string) {
     const user = await this.findOneById(id);
     await this.userRepo.remove(user);
-    return getSuccessRes({ message: 'User deleted' });
+    return { status: 'success', message: 'User deleted' };
   }
 }

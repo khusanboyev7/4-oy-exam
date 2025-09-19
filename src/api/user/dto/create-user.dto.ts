@@ -25,7 +25,11 @@ export class CreateUserDto {
   @IsNotEmpty()
   password: string;
 
-  @ApiProperty({ enum: AccessRoles, required: false })
+  @ApiProperty({
+    enum: AccessRoles,
+    required: false,
+    example: AccessRoles.READER,
+  })
   @IsOptional()
   @IsEnum(AccessRoles)
   role?: AccessRoles;

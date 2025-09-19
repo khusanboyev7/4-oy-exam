@@ -1,22 +1,25 @@
+// book.service.ts
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Book } from 'src/core/entity/book.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Book } from '../../core/entity/book.entity';
 import { CreateBookDto } from './dto/create-book.dto';
 import { UpdateBookDto } from './dto/update-book.dto';
-import { User } from 'src/core/entity/users.entity';
+import { User } from '../../core/entity/users.entity';
 
 @Injectable()
 export class BookService {
   constructor(
-    @InjectRepository(Book)
-    private readonly bookRepo: Repository<Book>,
+    @InjectRepository(Book) private readonly bookRepo: Repository<Book>,
+    @InjectRepository(User) private readonly userRepo: Repository<User>,
   ) {}
 
-  async create(dto: CreateBookDto, user: User) {
+  async create(dto: CreateBookDto, userId: string) {
+    const user = await this.userRepo.findOne({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User not found');
+
     const book = this.bookRepo.create({ ...dto, addedBy: user });
-    await this.bookRepo.save(book);
-    return { statusCode: 201, message: 'Book added', data: book };
+    return await this.bookRepo.save(book);
   }
 
   async findAll() {
@@ -24,10 +27,7 @@ export class BookService {
   }
 
   async findOne(id: string) {
-    const book = await this.bookRepo.findOne({
-      where: { id },
-      relations: ['addedBy'],
-    });
+    const book = await this.bookRepo.findOne({ where: { id } });
     if (!book) throw new NotFoundException('Book not found');
     return book;
   }
@@ -35,13 +35,12 @@ export class BookService {
   async update(id: string, dto: UpdateBookDto) {
     const book = await this.findOne(id);
     Object.assign(book, dto);
-    await this.bookRepo.save(book);
-    return { statusCode: 200, message: 'Book updated', data: book };
+    return await this.bookRepo.save(book);
   }
 
   async delete(id: string) {
     const book = await this.findOne(id);
     await this.bookRepo.remove(book);
-    return { statusCode: 200, message: 'Book deleted' };
+    return { message: 'Book deleted successfully' };
   }
 }

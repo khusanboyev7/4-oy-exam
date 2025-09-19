@@ -3,42 +3,39 @@ import {
   PrimaryGeneratedColumn,
   Column,
   ManyToOne,
-  CreateDateColumn,
-  UpdateDateColumn,
   OneToMany,
+  CreateDateColumn,
 } from 'typeorm';
 import { User } from './users.entity';
 import { Borrow } from './borrow.entity';
+import { BookHistory } from './book-history.entity';
 
 @Entity('books')
 export class Book {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'varchar', nullable: false })
+  @Column()
   title: string;
 
-  @Column({ type: 'varchar', nullable: true })
+  @Column()
   author: string;
 
-  @Column({ type: 'text', nullable: true })
-  description?: string;
+  @Column({ default: 2000 })
+  year: number;
 
-  @Column({ type: 'varchar', nullable: true })
-  category?: string;
+  @Column({ default: true })
+  available: boolean;
 
-  @Column({ type: 'int', default: 1 })
-  quantity: number;
-
-  @ManyToOne(() => User, (user) => user.id, { nullable: true })
+  @ManyToOne(() => User, { nullable: true })
   addedBy: User;
 
   @OneToMany(() => Borrow, (borrow) => borrow.book)
   borrows: Borrow[];
 
+  @OneToMany(() => BookHistory, (history) => history.book)
+  histories: BookHistory[];
+
   @CreateDateColumn()
   createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
 }

@@ -1,95 +1,69 @@
 import {
-  ForbiddenException,
   Injectable,
   UnauthorizedException,
   BadRequestException,
-  Inject,
 } from '@nestjs/common';
-import { Response } from 'express';
-import { IToken } from 'src/common/interface/token.interface';
-import { TokenService } from 'src/common/token/token';
-import { getSuccessRes } from 'src/common/util/get-succes-res';
-import { config } from 'src/config';
-import { Repository } from 'typeorm';
-import type { Cache } from 'cache-manager';
 import * as bcrypt from 'bcrypt';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { AccessRoles, User } from '../../core/entity/users.entity';
+import { CreateUserDto } from '../user/dto/create-user.dto';
+import { LoginDto } from './dto/login.dto';
+import { Token } from '../../common/token/token';
+import { IToken } from '../../common/interface/token.interface';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly jwt: TokenService,
-    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+    @InjectRepository(User)
+    private readonly userRepo: Repository<User>,
   ) {}
 
-  async newToken(repository: Repository<any>, token: string) {
-    const data: any = await this.jwt.verifyToken(
-      token,
-      config.REFRESH_TOKEN_SECRET_KEY,
-    );
-    if (!data) {
-      throw new UnauthorizedException('Refresh token expired');
+  async signup(dto: CreateUserDto) {
+    const existingUser = await this.userRepo.findOne({
+      where: { email: dto.email },
+    });
+    if (existingUser) {
+      throw new BadRequestException('Email already exists');
     }
-    const user = await repository.findOne({ where: { id: data?.id } });
-    if (!user) {
-      throw new ForbiddenException('Forbidden user');
-    }
-    const paylod: IToken = {
+
+    const hashed = await bcrypt.hash(dto.password, 10);
+
+    const user = this.userRepo.create({
+      full_name: dto.full_name,
+      email: dto.email,
+      password: hashed,
+      role: (dto.role ?? AccessRoles.READER) as AccessRoles,     isActive: true,
+    });
+
+    await this.userRepo.save(user);
+
+    return {
+      status: 'success',
+      message: 'User registered',
+      data: { id: user.id, email: user.email, role: user.role },
+    };
+  }
+
+  async signin(dto: LoginDto) {
+    const user = await this.userRepo.findOne({ where: { email: dto.email } });
+    if (!user) throw new UnauthorizedException('Invalid credentials');
+
+    const match = await bcrypt.compare(dto.password, user.password);
+    if (!match) throw new UnauthorizedException('Invalid credentials');
+
+    const payload: IToken = {
       id: user.id,
       isActive: user.isActive,
-      role: user.roles,
+      role: user.role,
     };
-    const accessToken = await this.jwt.accessToken(paylod);
-    return getSuccessRes({ token: accessToken });
-  }
 
-  async signOut(
-    repository: Repository<any>,
-    token: string,
-    res: Response,
-    tokenKey: string,
-  ) {
-    const data: any = await this.jwt.verifyToken(
-      token,
-      config.ACCESS_TOKEN_SECRET_KEY,
-    );
-    if (!data) {
-      throw new UnauthorizedException('Refresh token expired');
-    }
-    const user = await repository.findOne({ where: { id: data?.id } });
-    if (!user) {
-      throw new ForbiddenException('Forbidden user');
-    }
-    res.clearCookie(tokenKey);
-    return getSuccessRes({});
-  }
+    const token = Token.sign(payload);
 
-  async saveOtp(email: string, otp: string) {
-    await this.cacheManager.set(`otp:${email}`, otp, 1000 * 60 * 5);
-    return { message: 'OTP saqlandi' };
-  }
-
-  async verifyOtp(email: string, otp: string) {
-    const savedOtp = await this.cacheManager.get<string>(`otp:${email}`);
-    if (!savedOtp) throw new BadRequestException('OTP expired');
-    if (savedOtp !== otp) throw new BadRequestException('OPT incorrect');
-
-    await this.cacheManager.del(`otp:${email}`);
-    return true;
-  }
-
-  async resetPassword(
-    repository: Repository<any>,
-    email: string,
-    newPassword: string,
-  ) {
-    const user = await repository.findOne({ where: { email } });
-    if (!user) throw new BadRequestException('User not found');
-
-    const hashed = await bcrypt.hash(newPassword, 10);
-    user.password = hashed;
-    await repository.save(user);
-
-    return { message: 'password successfully changed' };
+    return {
+      status: 'success',
+      message: 'Login successful',
+      data: { token },
+    };
   }
 }

@@ -1,46 +1,29 @@
 import {
   Entity,
-  Column,
   PrimaryGeneratedColumn,
+  Column,
   ManyToOne,
   CreateDateColumn,
-  UpdateDateColumn,
 } from 'typeorm';
 import { User } from './users.entity';
 import { Book } from './book.entity';
 
-export enum BookHistoryStatus {
-  BORROWED = 'borrowed',
-  RETURNED = 'returned',
-}
+export type BookHistoryAction = 'borrow' | 'return';
 
-@Entity('book_history')
+@Entity()
 export class BookHistory {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => User, (user) => user.bookHistory, { onDelete: 'CASCADE' })
-  user: User;
-
-  @ManyToOne(() => Book, (book) => book.borrows, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Book, (book) => book.histories, { onDelete: 'CASCADE' })
   book: Book;
 
-  @Column({
-    type: 'enum',
-    enum: BookHistoryStatus,
-    default: BookHistoryStatus.BORROWED,
-  })
-  status: BookHistoryStatus;
+  @ManyToOne(() => User, (user) => user.histories, { onDelete: 'CASCADE' })
+  user: User;
 
-  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-  borrowed_at: Date;
+  @Column({ type: 'enum', enum: ['borrow', 'return'] })
+  action: BookHistoryAction;
 
-  @Column({ type: 'timestamp', nullable: true })
-  returned_at: Date;
-
-  @CreateDateColumn()
-  created_at: Date;
-
-  @UpdateDateColumn()
-  updated_at: Date;
+  @CreateDateColumn({ name: 'action_date' })
+  actionDate: Date;
 }

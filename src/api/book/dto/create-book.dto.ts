@@ -26,4 +26,8 @@ export class CreateBookDto {
   @IsInt()
   @Min(0)
   quantity?: number;
+
+  @ApiProperty({ example: 1997 })
+  @IsInt()
+  year: number;
 }
