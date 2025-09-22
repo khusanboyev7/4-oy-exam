@@ -24,6 +24,7 @@ export class BookHistoryController {
   constructor(private readonly bookHistoryService: BookHistoryService) {}
 
   @Post()
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Create new book history record' })
   @ApiResponse({
     status: HttpStatus.CREATED,
@@ -44,6 +45,7 @@ export class BookHistoryController {
   }
 
   @Get()
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get all book history records' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -66,6 +68,7 @@ export class BookHistoryController {
   }
 
   @Get(':id')
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get book history record by ID' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -86,6 +89,8 @@ export class BookHistoryController {
   }
 
   @Patch(':id')
+  @ApiBearerAuth()
+
   @ApiOperation({ summary: 'Update book history record' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -105,7 +110,7 @@ export class BookHistoryController {
     return this.bookHistoryService.update(id, dto);
   }
 
-  @Delete(':id')
+  @Delete(':id')@ApiBearerAuth()
   @ApiOperation({ summary: 'Delete book history record' })
   @ApiResponse({
     status: HttpStatus.OK,
